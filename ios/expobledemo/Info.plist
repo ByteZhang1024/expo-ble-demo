@@ -37,6 +37,8 @@
 	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>SplashScreen</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Search bluetooth usage</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

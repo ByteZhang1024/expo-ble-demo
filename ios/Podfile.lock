@@ -14,10 +14,48 @@ PODS:
   - EXJSONUtils (0.2.0)
   - EXKeepAwake (10.0.0):
     - ExpoModulesCore
+  - EXLocation (13.0.4):
+    - ExpoModulesCore
+    - UMTaskManagerInterface
   - EXManifests (0.2.2):
     - EXJSONUtils
   - Expo (43.0.1):
     - ExpoModulesCore
+  - expo-dev-client (0.6.3):
+    - EXManifests
+    - expo-dev-launcher
+    - expo-dev-menu
+    - expo-dev-menu-interface
+    - EXUpdatesInterface
+  - expo-dev-launcher (0.8.4):
+    - EXManifests
+    - expo-dev-launcher/Main (= 0.8.4)
+    - expo-dev-menu-interface
+    - EXUpdatesInterface
+    - React-Core
+  - expo-dev-launcher/Main (0.8.4):
+    - EXManifests
+    - expo-dev-launcher/Unsafe
+    - expo-dev-menu-interface
+    - EXUpdatesInterface
+    - React-Core
+  - expo-dev-launcher/Unsafe (0.8.4):
+    - EXManifests
+    - expo-dev-menu-interface
+    - EXUpdatesInterface
+    - React-Core
+  - expo-dev-menu (0.8.4):
+    - expo-dev-menu-interface
+    - expo-dev-menu/Main (= 0.8.4)
+    - React-Core
+  - expo-dev-menu-interface (0.4.1)
+  - expo-dev-menu/Main (0.8.4):
+    - expo-dev-menu-interface
+    - expo-dev-menu/Vendored
+    - React-Core
+  - expo-dev-menu/Vendored (0.8.4):
+    - expo-dev-menu-interface
+    - React-Core
   - ExpoModulesCore (0.4.7):
     - React-Core
   - EXSplashScreen (0.13.4):
@@ -40,6 +78,7 @@ PODS:
     - React-jsi (= 0.64.2)
     - ReactCommon/turbomodule/core (= 0.64.2)
   - glog (0.3.5)
+  - MultiplatformBleAdapter (0.1.7)
   - RCT-Folly (2020.01.13.00):
     - boost-for-react-native
     - DoubleConversion
@@ -233,6 +272,9 @@ PODS:
     - React-jsi (= 0.64.2)
     - React-perflogger (= 0.64.2)
   - React-jsinspector (0.64.2)
+  - react-native-ble-plx (2.0.2):
+    - MultiplatformBleAdapter (= 0.1.7)
+    - React
   - react-native-safe-area-context (3.3.2):
     - React-Core
   - React-perflogger (0.64.2)
@@ -333,6 +375,8 @@ PODS:
   - RNScreens (3.8.0):
     - React-Core
     - React-RCTImage
+  - UMTaskManagerInterface (7.0.3):
+    - ExpoModulesCore
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -344,8 +388,13 @@ DEPENDENCIES:
   - EXFont (from `../node_modules/expo-font/ios`)
   - EXJSONUtils (from `../node_modules/expo-json-utils/ios`)
   - EXKeepAwake (from `../node_modules/expo-keep-awake/ios`)
+  - EXLocation (from `../node_modules/expo-location/ios`)
   - EXManifests (from `../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo/ios`)
+  - expo-dev-client (from `../node_modules/expo-dev-client`)
+  - expo-dev-launcher (from `../node_modules/expo-dev-launcher`)
+  - expo-dev-menu (from `../node_modules/expo-dev-menu`)
+  - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core/ios`)
   - EXSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - EXStructuredHeaders (from `../node_modules/expo-structured-headers/ios`)
@@ -367,6 +416,7 @@ DEPENDENCIES:
   - React-jsi (from `../node_modules/react-native/ReactCommon/jsi`)
   - React-jsiexecutor (from `../node_modules/react-native/ReactCommon/jsiexecutor`)
   - React-jsinspector (from `../node_modules/react-native/ReactCommon/jsinspector`)
+  - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
   - React-RCTActionSheet (from `../node_modules/react-native/Libraries/ActionSheetIOS`)
@@ -383,11 +433,13 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - UMTaskManagerInterface (from `../node_modules/unimodules-task-manager-interface/ios`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
     - boost-for-react-native
+    - MultiplatformBleAdapter
 
 EXTERNAL SOURCES:
   DoubleConversion:
@@ -406,10 +458,20 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-json-utils/ios"
   EXKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
+  EXLocation:
+    :path: "../node_modules/expo-location/ios"
   EXManifests:
     :path: "../node_modules/expo-manifests/ios"
   Expo:
     :path: "../node_modules/expo/ios"
+  expo-dev-client:
+    :path: "../node_modules/expo-dev-client"
+  expo-dev-launcher:
+    :path: "../node_modules/expo-dev-launcher"
+  expo-dev-menu:
+    :path: "../node_modules/expo-dev-menu"
+  expo-dev-menu-interface:
+    :path: "../node_modules/expo-dev-menu-interface"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core/ios"
   EXSplashScreen:
@@ -448,6 +510,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/jsiexecutor"
   React-jsinspector:
     :path: "../node_modules/react-native/ReactCommon/jsinspector"
+  react-native-ble-plx:
+    :path: "../node_modules/react-native-ble-plx"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   React-perflogger:
@@ -480,6 +544,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  UMTaskManagerInterface:
+    :path: "../node_modules/unimodules-task-manager-interface/ios"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -493,8 +559,13 @@ SPEC CHECKSUMS:
   EXFont: 2e1c6fe726d008a039db80df95f48b4921b7fe59
   EXJSONUtils: f515cf71710855d7ba5bfc6752af3b9a6f6aad01
   EXKeepAwake: 8aa32396a5972d26e75e538603aad0f032396503
+  EXLocation: 192eaee761c159d1479111a0ced3bab7ad8475a3
   EXManifests: 50e42e01335df4e54109dee7be5a91bfd37347db
   Expo: cb542da0f7c8565a58231488066262f079eb1831
+  expo-dev-client: f7417249bbede98f5fa3f151ae49c46cabfce82b
+  expo-dev-launcher: 3a2b9470ed2b4ae0c60615f911c347c50cfc2526
+  expo-dev-menu: 07e44bd1432b2bdfe249f76c37a090510c5dcebc
+  expo-dev-menu-interface: 508467f2ba2aedda7a44e5080cc1e9a43ab7375e
   ExpoModulesCore: c353a3bed60c3b83dbe63f134aaa7bf4733ffa16
   EXSplashScreen: 68390ddb65a5def66ce8cf46a1e14a9b33cdac70
   EXStructuredHeaders: 873e7f329c2f6279c1b1e0229df59c9861560b53
@@ -503,6 +574,7 @@ SPEC CHECKSUMS:
   FBLazyVector: e686045572151edef46010a6f819ade377dfeb4b
   FBReactNativeSpec: 5aaef4766d79bb72777f5a9806f0cdd00bddae54
   glog: 73c2498ac6884b13ede40eda8228cb1eee9d9d62
+  MultiplatformBleAdapter: 975cfb2a333b2c42b7a11628bd100ccb61872da2
   RCT-Folly: ec7a233ccc97cc556cf7237f0db1ff65b986f27c
   RCTRequired: 6d3e854f0e7260a648badd0d44fc364bc9da9728
   RCTTypeSafety: c1f31d19349c6b53085766359caac425926fafaa
@@ -514,6 +586,7 @@ SPEC CHECKSUMS:
   React-jsi: 67747b9722f6dab2ffe15b011bcf6b3f2c3f1427
   React-jsiexecutor: 80c46bd381fd06e418e0d4f53672dc1d1945c4c3
   React-jsinspector: cc614ec18a9ca96fd275100c16d74d62ee11f0ae
+  react-native-ble-plx: caac53ee98151ec81198239d591c203809a1ed6e
   react-native-safe-area-context: 584dc04881deb49474363f3be89e4ca0e854c057
   React-perflogger: 25373e382fed75ce768a443822f07098a15ab737
   React-RCTActionSheet: af7796ba49ffe4ca92e7277a5d992d37203f7da5
@@ -530,6 +603,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: a479ebd5ed4221a810967000735517df0d2db211
   RNReanimated: 64c38d47ffcc29c97fc1d8cfde9e8a73d7be7cc8
   RNScreens: 6e1ea5787989f92b0671049b808aef64fa1ef98c
+  UMTaskManagerInterface: 5654c50e68af11b19b9d05452bacf23d19b3f30f
   Yoga: 575c581c63e0d35c9a83f4b46d01d63abc1100ac
 
 PODFILE CHECKSUM: 01760bec7391562671a61f92fc184ea4d97ae670

@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 
 LogBox.ignoreLogs([
   "VirtualizedLists should never be nested inside plain ScrollViews",
+  "Require cycle"
 ]);
 
 const defaultErrorHandler = ErrorUtils.getGlobalHandler();

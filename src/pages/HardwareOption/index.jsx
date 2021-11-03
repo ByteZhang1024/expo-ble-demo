@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import bleUtils from "../../util/BleUtils";
-// import { OneKeyConnect } from "../../trezor-connect";
+import { Handler } from "../../util/BleHandler";
+import OneKeyConnect from "../../trezor-connect";
 
 const HardwareOption = () => {
   const isFocused = useIsFocused();
@@ -20,6 +21,7 @@ const HardwareOption = () => {
   const device = route.params.device;
 
   const [hardwareInfo, setHardwareInfo] = useState(null);
+  const [pinInfo, setPinInfo] = useState(null);
 
   const [readServiceUUID, setReadServiceUUID] = useState([]);
   const [readCharacteristicUUID, setHeadCharacteristicUUID] = useState([]);
@@ -92,6 +94,18 @@ const HardwareOption = () => {
       setNofityCharacteristicUUID(nofityCharacteristicUUID);
     }
 
+    OneKeyConnect.init({
+      env: "react-native",
+      ble: Handler,
+      debug: false,
+    })
+      .then(() => {
+        console.log("OneKeyConnect 初始化成功");
+      })
+      .catch((err) => {
+        console.error("OneKeyConnect 初始化失败", err);
+      });
+
     fetchBleDeviceData();
   }, []);
 
@@ -107,7 +121,16 @@ const HardwareOption = () => {
           <Button
             title={"获取硬件信息"}
             style={{ color: "black", marginTop: 5 }}
-            onPress={() => {}}
+            onPress={() => {
+              OneKeyConnect.getFeatures()
+                .then((features) => {
+                  console.log("getFeatures ###############");
+                  console.log(JSON.stringify(features));
+                  setHardwareInfo(JSON.stringify(features));
+                  console.log("#############");
+                })
+                .catch((err) => console.log("error occur....."));
+            }}
           />
           <View style={styles.content}>
             <Text>info:</Text>
@@ -117,12 +140,22 @@ const HardwareOption = () => {
 
         <View style={{ marginHorizontal: 10, marginTop: 30 }}>
           <Button
-            title={"获取硬件信息"}
+            title={"修改 Pin 码"}
             style={{ color: "black", marginTop: 5 }}
+            onPress={() => {
+              OneKeyConnect.changePin({})
+                .then((features) => {
+                  console.log("###############");
+                  console.log(features);
+                  setPinInfo(JSON.stringify(features));
+                  console.log("#############");
+                })
+                .catch((err) => console.log("error occur....."));
+            }}
           />
           <View style={styles.content}>
             <Text>info:</Text>
-            <Text>{hardwareInfo}</Text>
+            <Text>{pinInfo}</Text>
           </View>
         </View>
 

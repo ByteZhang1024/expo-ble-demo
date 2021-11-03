@@ -3,7 +3,11 @@
     "name": "expo-ble-demo",
     "slug": "expo-ble-demo",
     "version": "1.0.0",
-    "assetBundlePatterns": ["**/*"]
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "sdkVersion": "43.0.0",
+    "entryPoint": ".vscode/exponentIndex.js"
   },
   "name": "expo-ble-demo"
 }

@@ -2,6 +2,7 @@ import { Alert } from "react-native";
 import { BleManager, ScanCallbackType, ScanMode } from "react-native-ble-plx";
 import { Buffer } from "buffer";
 import * as Location from "expo-location";
+import stores from "../stores";
 
 SERVICE_ID = "00000001-0000-1000-8000-00805f9b34fb";
 WRITE_NO_RESPONSE_ID = "00000002-0000-1000-8000-00805f9b34fb";
@@ -293,38 +294,42 @@ class BleUtils {
         )
         .then(
           (characteristic) => {
-            console.log("writeWithoutResponse success", formatValue);
+            console.log("ble writeWithoutResponse success", formatValue);
             resolve(characteristic);
           },
           (error) => {
-            console.log("writeWithoutResponse fail: ", error);
-            this.alert("writeWithoutResponse fail: ", error.reason);
+            console.log("ble writeWithoutResponse fail: ", error);
+            this.alert("ble writeWithoutResponse fail: ", error.reason);
             reject(error);
           }
         );
     });
   }
-  
+
   startNotification() {
     let transactionId = "notification";
-      this.manager.monitorCharacteristicForDevice(
-        this.peripheralId,
-        SERVICE_ID,
-        NOTIFICATION_ID ,
-        (error, characteristic) => {
-          if (error !== null) {
-            console.log("notication fail .........");
-          };
-          if (characteristic !== null) {
-            //TODO: 从蓝牙接收到的数据可能会超过MTU，这时蓝牙外设会返回两次或两次以上的通知，我们必须接收到完整的数据才能返回给调用方。
-            // 关于如何判断是否收到完整的数据包：1. 首包的格式为：9字节header(?## + 2字节的类型 + 4字节的总负载长度) + payload 2. 从首包数据中获取总负载长度(总负载长度不包括header的长度)
-            // 另外我们需要对接收到的数据做下处理：删除首包开头的 "?"，返回剩余数据。
-            
-            console.log("receive data from characteristic.......", Buffer.from(characteristic.value, "base64").toString('hex'));
-          }
-        },
-        transactionId,
-    )};
+    this.manager.monitorCharacteristicForDevice(
+      this.peripheralId,
+      SERVICE_ID,
+      NOTIFICATION_ID,
+      (error, characteristic) => {
+        if (error !== null) {
+          console.log("ble notication fail .........");
+        }
+        if (characteristic !== null) {
+          console.log(
+            "ble notification receive data from characteristic.......",
+            Buffer.from(characteristic.value, "base64").toString("hex")
+          );
+          
+          stores.bleExchange.addBuffer(
+            Buffer.from(characteristic.value, "base64")
+          );
+        }
+      },
+      transactionId
+    );
+  }
 
   /**
    * 卸载蓝牙管理器

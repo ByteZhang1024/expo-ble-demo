@@ -20,10 +20,8 @@ class BleExchange {
   }
 
   acquire() {
+    cleardata();
     this.requestNeeded = true;
-    this.isReadDone = false;
-    this.buffer = [];
-    this.headbuffer = [];
     this.activitySession = this.createSession();
   }
   addBuffer(input) {
@@ -56,11 +54,14 @@ class BleExchange {
       this.isReadDone = true;
     }
   }
-  release() {
+  cleardata() {
     this.requestNeeded = false;
     this.isReadDone = false;
     this.buffer = [];
     this.headbuffer = [];
+  }
+  release() {
+    cleardata();
     this.activitySession = undefined;
   }
   getData() {

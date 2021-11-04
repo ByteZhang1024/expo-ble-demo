@@ -61,7 +61,7 @@ const Main = () => {
         component={TabSimpleScreen}
         options={{
           title: "已经连接的设备",
-          tabBarIcon: getTabBarIcon("help"),
+          tabBarIcon: getTabBarIcon("list"),
         }}
       />
       <BottomTabs.Screen

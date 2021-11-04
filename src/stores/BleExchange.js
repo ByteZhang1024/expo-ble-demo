@@ -2,6 +2,7 @@ import { action, makeObservable, observable } from "mobx";
 import { Buffer } from "buffer";
 
 class BleExchange {
+  debug = false;
   requestNeeded = false;
   activitySession = undefined;
   isReadDone = false;
@@ -20,7 +21,7 @@ class BleExchange {
   }
 
   acquire() {
-    cleardata();
+    this.cleardata();
     this.requestNeeded = true;
     this.activitySession = this.createSession();
   }
@@ -38,19 +39,27 @@ class BleExchange {
       this.headbuffer = [...data.subarray(1, 9)];
       this.maxSize = data.readIntBE(5, 4);
       this.buffer = [...data.subarray(9)];
-      console.log("BleExchange", "处理首包数据", "数据长度", this.maxSize);
+      if (this.debug) {
+        console.log("BleExchange", "处理首包数据", "数据长度", this.maxSize);
+      }
     } else {
-      console.log("BleExchange", "处理次包数据", "数据长度", data.length);
+      if (this.debug) {
+        console.log("BleExchange", "处理次包数据", "数据长度", data.length);
+      }
       this.buffer = this.buffer.concat([...data]);
     }
-    console.log("BleExchange", "当前数据包大小", this.buffer.length);
+    if (this.debug) {
+      console.log("BleExchange", "当前数据包大小", this.buffer.length);
+    }
     if (this.buffer.length >= this.maxSize) {
-      console.log(
-        "BleExchange",
-        "数据收集完毕",
-        "数据长度",
-        this.buffer.length
-      );
+      if (this.debug) {
+        console.log(
+          "BleExchange",
+          "数据收集完毕",
+          "数据长度",
+          this.buffer.length
+        );
+      }
       this.isReadDone = true;
     }
   }
@@ -61,7 +70,7 @@ class BleExchange {
     this.headbuffer = [];
   }
   release() {
-    cleardata();
+    this.cleardata();
     this.activitySession = undefined;
   }
   getData() {

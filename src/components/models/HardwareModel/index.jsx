@@ -26,8 +26,12 @@ const HardwareModel = () => {
   useEffect(() => {
     async function init() {
       OneKeyConnect.on("UI_EVENT", (event) => {
-        event.payload.device = "null";
+        let newEvent = JSON.parse(JSON.stringify(event));
+        if (newEvent.payload && newEvent.payload.device) {
+          newEvent.payload.device = undefined;
+        }
         console.log("### UI_EVENT ###", JSON.stringify(event));
+
         if (event.type === "ui-button" /* REQUEST_BUTTON */) {
           // 处理硬件操作
           // "code":"ButtonRequest_ProtectCall" 相应按键
@@ -46,29 +50,58 @@ const HardwareModel = () => {
             setRequestType(NEW_SECOND);
           }
         }
+        return event;
       });
 
       OneKeyConnect.on("DEVICE_EVENT", (event) => {
-        event.payload.device = "null";
-        event.payload.firmwareRelease = "null";
-        event.payload.bleFirmwareRelease = "null";
-        event.payload.features = "null";
-        console.log("### DEVICE_EVENT ###", JSON.stringify(event));
+        let newEvent = JSON.parse(JSON.stringify(event));
+        if (newEvent.payload) {
+          if (newEvent.payload.device) {
+            newEvent.payload.device = undefined;
+          }
+          if (newEvent.payload.firmwareRelease) {
+            newEvent.payload.firmwareRelease = undefined;
+          }
+          if (newEvent.payload.bleFirmwareRelease) {
+            newEvent.payload.bleFirmwareRelease = undefined;
+          }
+          if (newEvent.payload.features) {
+            newEvent.payload.features = undefined;
+          }
+        }
+
+        console.log("### DEVICE_EVENT ###", JSON.stringify(newEvent));
+        return event;
       });
 
       OneKeyConnect.on("RESPONSE_EVENT", (event) => {
-        event.payload.device = "null";
-        console.log("### RESPONSE_EVENT ###", JSON.stringify(event));
+        let newEvent = JSON.parse(JSON.stringify(event));
+
+        if (newEvent.payload && newEvent.payload.device) {
+          newEvent.payload.device = undefined;
+        }
+        console.log("### RESPONSE_EVENT ###", JSON.stringify(newEvent));
+        return event;
       });
 
       OneKeyConnect.on("TRANSPORT_EVENT", (event) => {
-        event.payload.device = "null";
-        console.log("### TRANSPORT_EVENT ###", JSON.stringify(event));
+        let newEvent = JSON.parse(JSON.stringify(event));
+
+        if (newEvent.payload && newEvent.payload.device) {
+          newEvent.payload.device = undefined;
+        }
+        console.log("### TRANSPORT_EVENT ###", JSON.stringify(newEvent));
+        return event;
       });
 
       OneKeyConnect.on("BLOCKCHAIN_EVENT", (event) => {
-        event.payload.device = "null";
-        console.log("### BLOCKCHAIN_EVENT ###", JSON.stringify(event));
+        let newEvent = JSON.parse(JSON.stringify(event));
+
+        if (newEvent.payload && newEvent.payload.device) {
+          newEvent.payload.device = undefined;
+        }
+        console.log("### BLOCKCHAIN_EVENT ###", JSON.stringify(newEvent));
+        return event;
       });
     }
     init();

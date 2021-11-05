@@ -2,7 +2,7 @@ import { action, makeObservable, observable } from "mobx";
 import { Buffer } from "buffer";
 
 class BleExchange {
-  debug = false;
+  debug = true;
   requestNeeded = false;
   activitySession = undefined;
   isReadDone = false;

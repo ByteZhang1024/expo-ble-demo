@@ -41,6 +41,8 @@ class BleDeviceStore {
       disconnect: action.bound,
     });
     this.initConnectedDevices();
+    this.onDeviceDisconnect();
+    this.onStopScanDevice();
 
     this.connectedDevices = autorun(() => {
       this.connectedDevices = [...this.connectedDeviceMap.values()];
@@ -55,10 +57,10 @@ class BleDeviceStore {
     bleUtils
       .findConnectedDevices()
       .then((devices) => {
-        console.log("已经连接过的");
+        console.log("已经连接的设备");
         console.log(JSON.stringify(devices));
         devices.forEach((device) => {
-          console.log("已经连接过的", device.id, device.name);
+          console.log("已经连接的设备: ", device.id, device.name);
           if (isOnekeyDevice(device)) {
             device.connceted = true;
             this.connectedDeviceMap.set(device.id, device);
@@ -72,9 +74,7 @@ class BleDeviceStore {
 
   async isConnected(deviceId) {
     const exists = this.connectedDeviceMap.has(deviceId);
-    return (
-      exists == true && this.connectedDeviceMap.get(deviceId).isConnected()
-    );
+    return exists == true && await bleUtils.isDeviceConnected(deviceId, []);
   }
 
   scanDevices(searchTime = 10) {
@@ -168,7 +168,6 @@ class BleDeviceStore {
             console.log("连接成功");
             device.connected = true;
             this.connectedDeviceMap.set(device.id, device);
-            this.onDeviceDisconnect(device.id);
             resolve(device);
           })
         )
@@ -195,22 +194,26 @@ class BleDeviceStore {
     });
   }
 
-  onDeviceDisconnect(peripheralId) {
-    bleUtils.manager.onDeviceDisconnected(peripheralId, (error, device) => {
+  onDeviceDisconnect() {
+    bleUtils.onDeviceDisconnect((peripheral) => {
       runInAction(() => {
-        this.connectedDeviceMap.delete(peripheralId);
+        this.connectedDeviceMap.delete(peripheral.id);
       });
-      if (error) {
-        // 蓝牙遇到错误自动断开
-        console.log("onDeviceDisconnected", "device disconnect", error);
-      } else {
-        console.log(
-          "onDeviceDisconnected",
-          "device disconnect",
-          device.id,
-          device.name
-        );
-      }
+      console.log(
+        "onDeviceDisconnected",
+        "device disconnect",
+        device.id,
+        device.name
+      );
+    });
+  }
+
+  onStopScanDevice() {
+    bleUtils.onStopScan(() => {
+      runInAction(() => {
+        this.isScaning = false;
+        console.log("停止蓝牙搜索");
+      });
     });
   }
 }

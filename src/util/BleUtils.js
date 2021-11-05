@@ -1,4 +1,4 @@
-import React, { Alert, NativeEventEmitter } from "react-native";
+import React, { Alert, Platform, NativeEventEmitter } from "react-native";
 import { Buffer } from "buffer";
 import * as Location from "expo-location";
 import stores from "../stores";
@@ -15,7 +15,7 @@ class BleUtils {
     this.isConnecting = false; //蓝牙是否连接
     this.initUUID();
     this.manager = React.NativeModules.BleManager;
-    this.isPeripheralConnected = this.isPeripheralConnected.bind(this);
+    this.isPeripheralConnected = this.isDeviceConnected.bind(this);
     this.bleManagerEmitter = new NativeEventEmitter(this.manager);
 
     this.bleManagerEmitter.addListener(
@@ -42,11 +42,11 @@ class BleUtils {
     }
   };
 
-  handleDisconnectedPeripheral = (data) => {
-    if (this.onDeviceDisconnectListener) {
-      this.onDeviceDisconnectListener(peripheral);
+  handleDisconnectedPeripheral = (device) => {
+    if (this.onDeviceDisconnectListener && device) {
+      this.onDeviceDisconnectListener(device.peripheral);
     }
-    console.log("Disconnected from " + data.peripheral);
+    console.log("Disconnected from " + JSON.stringify(device));
   };
 
   handleUpdateValueForCharacteristic = (data) => {
@@ -112,7 +112,7 @@ class BleUtils {
   }
 
   //获取Notify、Read、Write、WriteWithoutResponse的serviceUUID和characteristicUUID
-  getUUID(services) {
+  getUUID(deviceId) {
     this.readServiceUUID = [];
     this.readCharacteristicUUID = [];
     this.writeWithResponseServiceUUID = [];
@@ -122,31 +122,10 @@ class BleUtils {
     this.nofityServiceUUID = [];
     this.nofityCharacteristicUUID = [];
 
-    for (let i in services) {
-      // console.log('service',services[i]);
-      let charchteristic = services[i].characteristics;
-      for (let j in charchteristic) {
-        // console.log('charchteristic',charchteristic[j]);
-        if (charchteristic[j].isReadable) {
-          this.readServiceUUID.push(services[i].uuid);
-          this.readCharacteristicUUID.push(charchteristic[j].uuid);
-        }
-        if (charchteristic[j].isWritableWithResponse) {
-          this.writeWithResponseServiceUUID.push(services[i].uuid);
-          this.writeWithResponseCharacteristicUUID.push(charchteristic[j].uuid);
-        }
-        if (charchteristic[j].isWritableWithoutResponse) {
-          this.writeWithoutResponseServiceUUID.push(services[i].uuid);
-          this.writeWithoutResponseCharacteristicUUID.push(
-            charchteristic[j].uuid
-          );
-        }
-        if (charchteristic[j].isNotifiable) {
-          this.nofityServiceUUID.push(services[i].uuid);
-          this.nofityCharacteristicUUID.push(charchteristic[j].uuid);
-        }
-      }
-    }
+    Promise.resolve().then(async () => {
+      const deviceInfo = await this.manager.retrieveServices(deviceId, []);
+      console.log(deviceInfo);
+    });
 
     console.log("readServiceUUID", this.readServiceUUID);
     console.log("readCharacteristicUUID", this.readCharacteristicUUID);
@@ -189,7 +168,7 @@ class BleUtils {
   }
 
   async findConnectedDevices() {
-    return this.getConnectedPeripherals([]);
+    return this.getConnectedDevices([]);
   }
 
   /**
@@ -271,24 +250,27 @@ class BleUtils {
   /**
    * 连接蓝牙
    * */
-  async connect(id) {
-    console.log("isConneting:", id);
+  async connect(deviceId) {
+    console.log("isConneting:", deviceId);
     this.isConnecting = true;
     try {
       await this.checkPermission();
-      const device = await this.manager.connectToDevice(id, {
-        timeout: 3000,
-        requestMTU: 512,
+      await new Promise((fulfill, reject) => {
+        this.manager.connect(deviceId, (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            fulfill();
+          }
+        });
       });
+      await this.requestMTU(deviceId, 512);
+      const device = await this.getConnectedDeviceInfo(deviceId);
+      console.log(device);
       console.log("connect success:", device.name, device.id);
       this.peripheralId = device.id;
-      const device_1 = await device.discoverAllServicesAndCharacteristics();
-      const services = await this.fetchServicesAndCharacteristicsForDevice(
-        device_1
-      );
-      console.log("fetchServicesAndCharacteristicsForDevice", services);
       this.isConnecting = false;
-      this.getUUID(services);
+      await this.getUUID(deviceId);
       this.startNotification();
     } catch (err) {
       this.isConnecting = false;
@@ -299,11 +281,22 @@ class BleUtils {
   /**
    * 断开蓝牙
    * */
-  async disconnect(deviceId) {
-    await this.manager.cancelDeviceConnection(deviceId);
+  disconnect(deviceId, force = true) {
+    return new Promise((fulfill, reject) => {
+      this.manager.disconnect(deviceId, force, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          fulfill();
+        }
+      });
+    });
   }
 
   async checkPermission() {
+    if (Platform.OS == "ios") {
+      return;
+    }
     const permissionsStatus =
       await Location.requestForegroundPermissionsAsync();
     const { status } = permissionsStatus;
@@ -413,31 +406,26 @@ class BleUtils {
   }
 
   startNotification() {
-    let transactionId = "notification";
-    this.manager.monitorCharacteristicForDevice(
-      this.peripheralId,
-      SERVICE_ID,
-      NOTIFICATION_ID,
-      (error, characteristic) => {
-        if (error !== null) {
-          console.log("ble notication fail .........");
-        }
-        if (characteristic !== null) {
-          console.log(
-            "ble notification receive data from characteristic.......",
-            Buffer.from(characteristic.value, "base64").toString("hex")
-          );
-
-          stores.bleExchange.addBuffer(
-            Buffer.from(characteristic.value, "base64")
-          );
-        }
-      },
-      transactionId
-    );
+    this.manager
+      .startNotification(this.peripheralId, SERVICE_ID, NOTIFICATION_ID)
+      .then((result) => {
+        console.log(
+          "ble notification receive data from characteristic.......",
+          Buffer.from(result.value, "base64").toString("hex")
+        );
+        stores.bleExchange.addBuffer(Buffer.from(result.value, "base64"));
+      });
   }
 
-  getConnectedPeripherals(serviceUUIDs) {
+  onDeviceDisconnect(listener) {
+    this.onDeviceDisconnectListener = listener;
+  }
+
+  onStopScan(listener) {
+    this.onStopScanListener = listener;
+  }
+
+  getConnectedDevices(serviceUUIDs) {
     return new Promise((resolve, reject) => {
       this.manager.getConnectedPeripherals(serviceUUIDs, (error, result) => {
         if (error) {
@@ -453,11 +441,19 @@ class BleUtils {
     });
   }
 
-  isPeripheralConnected(peripheralId, serviceUUIDs) {
-    return this.getConnectedPeripherals(serviceUUIDs).then((result) => {
+  getConnectedDeviceInfo(deviceId) {
+    return this.getConnectedDevices([]).then((result) => {
+      return result.find((p) => {
+        return p.id === deviceId;
+      });
+    });
+  }
+
+  isDeviceConnected(deviceId, serviceUUIDs) {
+    return this.getConnectedDevices(serviceUUIDs).then((result) => {
       if (
         result.find((p) => {
-          return p.id === peripheralId;
+          return p.id === deviceId;
         })
       ) {
         return true;
@@ -467,11 +463,38 @@ class BleUtils {
     });
   }
 
+  requestMTU(deviceId, mtu) {
+    return new Promise((fulfill, reject) => {
+      this.manager.requestMTU(deviceId, mtu, (error, mtu) => {
+        if (error) {
+          reject(error);
+        } else {
+          fulfill(mtu);
+        }
+      });
+    });
+  }
+
   /**
    * 卸载蓝牙管理器
    * */
   destroy() {
-    this.manager.destroy();
+    this.bleManagerEmitter.removeListener(
+      "BleManagerDiscoverPeripheral",
+      this.handleDiscoverPeripheral
+    );
+    this.bleManagerEmitter.removeListener(
+      "BleManagerStopScan",
+      this.handleStopScan
+    );
+    this.bleManagerEmitter.removeListener(
+      "BleManagerDisconnectPeripheral",
+      this.handleDisconnectedPeripheral
+    );
+    this.bleManagerEmitter.removeListener(
+      "BleManagerDidUpdateValueForCharacteristic",
+      this.handleUpdateValueForCharacteristic
+    );
   }
 
   alert(text) {

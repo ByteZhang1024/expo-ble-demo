@@ -7,6 +7,7 @@ import OneKeyConnect from "../../../trezor-connect";
 import HardwarePin from "../../../pages/HardwarePin";
 import HardwareModel from "../../models/HardwareModel";
 import { View } from "react-native";
+import LaunchView from "../../../pages/LaunchPage";
 
 const Stack = createStackNavigator();
 
@@ -14,12 +15,13 @@ const AppNav = () => {
   return (
     <View style={{ flex: 1 }}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="main">
+        <Stack.Navigator initialRouteName="launch">
           <Stack.Group
             screenOptions={{
               headerShown: false,
             }}
           >
+            <Stack.Screen name="launch" component={LaunchView} />
             <Stack.Screen name="main" component={Main} />
             <Stack.Screen name="password" component={HardwarePin} />
           </Stack.Group>

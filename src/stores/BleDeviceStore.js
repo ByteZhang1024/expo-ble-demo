@@ -80,49 +80,62 @@ class BleDeviceStore {
   scanDevices(searchTime = 10) {
     console.log("开始搜索蓝牙");
 
-    runInAction(() => {
-      this.stopScanDevices();
-      this.isScaning = true;
-      this.findedDeviceMap.clear();
-    });
-
-    try {
-      bleUtils.startDeviceScan((device) => {
-        if (isOnekeyDevice(device)) {
-          const exists = this.findedDeviceMap.has(device.id);
-          if (!exists) {
-            runInAction(() => {
-              // 使用Map类型保存搜索到的蓝牙设备，确保列表不显示重复的设备
-              this.findedDeviceMap.set(device.id, device);
-              console.log(device.id, device.name);
-            });
-          }
+    Promise.resolve()
+      .then(() => {
+        if (this.isScaning == true) {
+          console.log("停止搜索蓝牙");
+          bleUtils.stopScan();
         }
-      });
+      })
+      .then(() => {
+        console.log("修改状态");
+        runInAction(() => {
+          this.isScaning = true;
+          this.findedDeviceMap.clear();
+        });
+      })
+      .then(() => {
+        console.log("搜索中");
+        bleUtils.startDeviceScan(
+          (device) => {
+            if (isOnekeyDevice(device)) {
+              const exists = this.findedDeviceMap.has(device.id);
+              if (!exists) {
+                runInAction(() => {
+                  // 使用Map类型保存搜索到的蓝牙设备，确保列表不显示重复的设备
+                  this.findedDeviceMap.set(device.id, device);
+                  console.log(device.id, device.name);
+                });
+              }
+            }
+          },
+          [],
+          searchTime
+        );
+      })
+      .catch((error) => {
+        runInAction(() => {
+          this.scaning = false;
+        });
 
-      if (searchTime && searchTime != 0) {
-        scanTimer && clearTimeout(scanTimer);
-        scanTimer = setTimeout(() => {
-          this.stopScanDevices();
-        }, searchTime * 1000); //10 秒后停止搜索
-      }
-    } catch (error) {
-      runInAction(() => {
-        this.scaning = false;
+        console.log("startDeviceScan error:", error);
+        toastLong(error);
       });
-
-      console.log("startDeviceScan error:", error);
-      toastLong(error);
-    }
   }
 
   stopScanDevices() {
     if (this.isScaning == true) {
-      bleUtils.stopScan();
-      runInAction(() => {
-        this.isScaning = false;
-        console.log("停止蓝牙搜索");
-      });
+      bleUtils
+        .stopScan()
+        .then(() => {
+          runInAction(() => {
+            this.isScaning = false;
+            console.log("停止蓝牙搜索");
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
   }
 

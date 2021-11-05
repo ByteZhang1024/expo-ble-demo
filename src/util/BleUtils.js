@@ -1,5 +1,4 @@
-import { Alert } from "react-native";
-import { BleManager, ScanCallbackType, ScanMode } from "react-native-ble-plx";
+import React, { Alert, NativeEventEmitter } from "react-native";
 import { Buffer } from "buffer";
 import * as Location from "expo-location";
 import stores from "../stores";
@@ -15,8 +14,58 @@ class BleUtils {
   constructor() {
     this.isConnecting = false; //蓝牙是否连接
     this.initUUID();
-    this.manager = new BleManager();
+    this.manager = React.NativeModules.BleManager;
+    this.isPeripheralConnected = this.isPeripheralConnected.bind(this);
+    this.bleManagerEmitter = new NativeEventEmitter(this.manager);
+
+    this.bleManagerEmitter.addListener(
+      "BleManagerDiscoverPeripheral",
+      this.handleDiscoverPeripheral
+    );
+    this.bleManagerEmitter.addListener(
+      "BleManagerStopScan",
+      this.handleStopScan
+    );
+    this.bleManagerEmitter.addListener(
+      "BleManagerDisconnectPeripheral",
+      this.handleDisconnectedPeripheral
+    );
+    this.bleManagerEmitter.addListener(
+      "BleManagerDidUpdateValueForCharacteristic",
+      this.handleUpdateValueForCharacteristic
+    );
   }
+
+  handleDiscoverPeripheral = (peripheral) => {
+    if (this.onScanListener) {
+      this.onScanListener(peripheral);
+    }
+  };
+
+  handleDisconnectedPeripheral = (data) => {
+    if (this.onDeviceDisconnectListener) {
+      this.onDeviceDisconnectListener(peripheral);
+    }
+    console.log("Disconnected from " + data.peripheral);
+  };
+
+  handleUpdateValueForCharacteristic = (data) => {
+    console.log(
+      "Received data from " +
+        data.peripheral +
+        " characteristic " +
+        data.characteristic,
+      data.value
+    );
+  };
+
+  handleStopScan = () => {
+    console.log("Scan is stopped");
+    this.onScanListener = null;
+    if (this.onStopScanListener) {
+      this.onStopScanListener();
+    }
+  };
 
   /**
    * 获取蓝牙UUID
@@ -121,33 +170,82 @@ class BleUtils {
     console.log("nofityCharacteristicUUID", this.nofityCharacteristicUUID);
   }
 
+  init(options) {
+    return new Promise((resolve, reject) => {
+      if (options == null) {
+        options = {};
+      }
+      if (options.showAlert == null) {
+        options.showAlert = true;
+      }
+      this.manager.start(options, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
   async findConnectedDevices() {
-    return this.manager.connectedDevices([
-      "00000003-0000-1000-8000-00805f9b34fb",
-    ]);
+    return this.getConnectedPeripherals([]);
   }
 
   /**
    * 搜索蓝牙
    * */
-  startDeviceScan(listener) {
+  startDeviceScan(
+    listener,
+    serviceUUIDs,
+    seconds,
+    allowDuplicates,
+    scanningOptions = {}
+  ) {
+    if (seconds == null) {
+      seconds = 15;
+    }
+
+    if (allowDuplicates == null) {
+      allowDuplicates = false;
+    }
+
+    // (ANDROID) Match as many advertisement per filter as hw could allow
+    // dependes on current capability and availability of the resources in hw.
+    if (scanningOptions.numberOfMatches == null) {
+      scanningOptions.numberOfMatches = 3;
+    }
+
+    // (ANDROID) Defaults to MATCH_MODE_AGGRESSIVE
+    if (scanningOptions.matchMode == null) {
+      scanningOptions.matchMode = 1;
+    }
+
+    // (ANDROID) Defaults to SCAN_MODE_LOW_POWER on android
+    if (scanningOptions.scanMode == null) {
+      scanningOptions.scanMode = 2; // SCAN_MODE_LOW_LATENCY
+    }
+
+    if (scanningOptions.reportDelay == null) {
+      scanningOptions.reportDelay = 0;
+    }
+
     Promise.resolve()
       .then(() => this.checkPermission())
       .then(() => {
-        this.manager.startDeviceScan(
-          null,
-          {
-            scanMode: ScanMode.LowLatency,
-          },
-          (error, device) => {
+        this.onScanListener = listener;
+        this.manager.scan(
+          serviceUUIDs,
+          seconds,
+          allowDuplicates,
+          scanningOptions,
+          (error) => {
             if (error) {
               console.log("startDeviceScan error:", error);
               if (error.errorCode == 102) {
                 this.alert("请打开手机蓝牙后再搜索");
               }
               throw error;
-            } else {
-              listener(device);
             }
           }
         );
@@ -158,8 +256,16 @@ class BleUtils {
    * 停止搜索蓝牙
    * */
   stopScan() {
-    this.manager.stopDeviceScan();
-    console.log("stopDeviceScan");
+    return new Promise((resolve, reject) => {
+      console.log("stopDeviceScan");
+      this.manager.stopScan((error) => {
+        if (error != null) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   /**
@@ -321,7 +427,7 @@ class BleUtils {
             "ble notification receive data from characteristic.......",
             Buffer.from(characteristic.value, "base64").toString("hex")
           );
-          
+
           stores.bleExchange.addBuffer(
             Buffer.from(characteristic.value, "base64")
           );
@@ -329,6 +435,36 @@ class BleUtils {
       },
       transactionId
     );
+  }
+
+  getConnectedPeripherals(serviceUUIDs) {
+    return new Promise((resolve, reject) => {
+      this.manager.getConnectedPeripherals(serviceUUIDs, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          if (result != null) {
+            resolve(result);
+          } else {
+            resolve([]);
+          }
+        }
+      });
+    });
+  }
+
+  isPeripheralConnected(peripheralId, serviceUUIDs) {
+    return this.getConnectedPeripherals(serviceUUIDs).then((result) => {
+      if (
+        result.find((p) => {
+          return p.id === peripheralId;
+        })
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    });
   }
 
   /**

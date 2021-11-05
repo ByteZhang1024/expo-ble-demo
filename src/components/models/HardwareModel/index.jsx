@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Button,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Modal from "react-native-modal";
 import OneKeyConnect from "../../../trezor-connect";
 import { tailwind } from "../../../util/tailwind";
@@ -20,7 +27,7 @@ const HardwareModel = () => {
     async function init() {
       OneKeyConnect.on("UI_EVENT", (event) => {
         event.payload.device = "null";
-        console.log("收到 UI_EVENT 回调", JSON.stringify(event));
+        console.log("### UI_EVENT ###", JSON.stringify(event));
         if (event.type === "ui-button" /* REQUEST_BUTTON */) {
           // 处理硬件操作
           // "code":"ButtonRequest_ProtectCall" 相应按键
@@ -39,6 +46,29 @@ const HardwareModel = () => {
             setRequestType(NEW_SECOND);
           }
         }
+      });
+
+      OneKeyConnect.on("DEVICE_EVENT", (event) => {
+        event.payload.device = "null";
+        event.payload.firmwareRelease = "null";
+        event.payload.bleFirmwareRelease = "null";
+        event.payload.features = "null";
+        console.log("### DEVICE_EVENT ###", JSON.stringify(event));
+      });
+
+      OneKeyConnect.on("RESPONSE_EVENT", (event) => {
+        event.payload.device = "null";
+        console.log("### RESPONSE_EVENT ###", JSON.stringify(event));
+      });
+
+      OneKeyConnect.on("TRANSPORT_EVENT", (event) => {
+        event.payload.device = "null";
+        console.log("### TRANSPORT_EVENT ###", JSON.stringify(event));
+      });
+
+      OneKeyConnect.on("BLOCKCHAIN_EVENT", (event) => {
+        event.payload.device = "null";
+        console.log("### BLOCKCHAIN_EVENT ###", JSON.stringify(event));
       });
     }
     init();
@@ -108,22 +138,24 @@ const HardwareModel = () => {
           />
 
           <View style={tailwind("okd-flex-row okd-m-6 okd-h-14")}>
-            <Text
+            <TouchableOpacity
               style={styles.buttonItem}
               onPress={() => {
                 deleteInputNumber();
               }}
             >
-              {inputPin.length == 0 ? "取消" : "删除"}
-            </Text>
-            <Text
+              <Text style={styles.buttonItemText}>
+                {inputPin.length == 0 ? "取消" : "删除"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.buttonItem}
               onPress={() => {
                 configPin();
               }}
             >
-              确定
-            </Text>
+              <Text style={styles.buttonItemText}>确定</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -154,7 +186,12 @@ const styles = StyleSheet.create({
   buttonRow: {},
   buttonItem: {
     ...tailwind(
-      "okd-flex-1 okd-text-3xl okd-m-0.5 okd-text-center okd-rounded-sm okd-border okd-border-gray-300"
+      "okd-flex-1 okd-m-0.5 okd-rounded-sm okd-border okd-border-gray-300 okd-bg-gray-500"
     ),
+  },
+  buttonItemText: {
+    ...tailwind("okd-flex-1 okd-text-xl okd-text-center okd-text-white"),
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
 });

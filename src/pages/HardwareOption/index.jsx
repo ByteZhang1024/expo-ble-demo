@@ -130,6 +130,7 @@ const HardwareOption = () => {
                   console.log("#############");
                 })
                 .catch((err) => console.log("error occur....."));
+              console.log("OneKeyConnect getFeatures 调用完成")
             }}
           />
           <View style={styles.content}>

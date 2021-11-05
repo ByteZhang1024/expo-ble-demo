@@ -55,10 +55,10 @@ class BleDeviceStore {
     bleUtils
       .findConnectedDevices()
       .then((devices) => {
-        console.log("已经连接过的");
+        console.log("已经连接的设备");
         console.log(JSON.stringify(devices));
         devices.forEach((device) => {
-          console.log("已经连接过的", device.id, device.name);
+          console.log("已经连接的设备: ", device.id, device.name);
           if (isOnekeyDevice(device)) {
             device.connceted = true;
             this.connectedDeviceMap.set(device.id, device);

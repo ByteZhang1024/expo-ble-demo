@@ -1,4 +1,4 @@
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 import { BleManager, ScanCallbackType, ScanMode } from "react-native-ble-plx";
 import { Buffer } from "buffer";
 import * as Location from "expo-location";
@@ -198,6 +198,9 @@ class BleUtils {
   }
 
   async checkPermission() {
+    if (Platform.OS == "ios") {
+      return;
+    }
     const permissionsStatus =
       await Location.requestForegroundPermissionsAsync();
     const { status } = permissionsStatus;

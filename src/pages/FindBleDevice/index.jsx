@@ -1,5 +1,6 @@
+import { observer } from "mobx-react";
 import { Observer } from "mobx-react-lite";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Button,
   FlatList,
@@ -10,11 +11,17 @@ import {
   View,
 } from "react-native";
 import { useStores } from "../../hooks/use_store";
+import { toastShort } from "../../util/ToastUtil";
 
 const FindBleDevice = () => {
   const { bleDeviceStore } = useStores();
+  const [connectChange, setConnectChange] = useState(false);
 
-  const renderHeader = () => {
+  useEffect(() => {
+    setConnectChange(!connectChange);
+  }, [bleDeviceStore.connectedDevices]);
+
+  const renderHeader = observer(() => {
     return (
       <View style={{ marginTop: 20 }}>
         <TouchableOpacity
@@ -37,10 +44,10 @@ const FindBleDevice = () => {
         <Text style={{ marginLeft: 10, marginTop: 10 }}>{"可用设备"}</Text>
       </View>
     );
-  };
+  });
 
-  const renderItem = (item) => {
-    const device = item.item;
+  const renderItem = (props) => {
+    const device = props.item;
 
     return (
       <TouchableOpacity
@@ -74,6 +81,7 @@ const FindBleDevice = () => {
             data={bleDeviceStore.findedDevices}
             ListHeaderComponent={renderHeader}
             keyboardShouldPersistTaps="handled"
+            extraData={(connectChange, bleDeviceStore.isConnecting)}
           />
         </SafeAreaView>
       )}

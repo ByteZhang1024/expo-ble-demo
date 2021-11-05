@@ -4,6 +4,9 @@ import {
   configure,
   computed,
   autorun,
+  action,
+  observable,
+  makeObservable,
 } from "mobx";
 import bleUtils from "../util/BleUtils";
 import { isOnekeyDevice } from "../util/OnekeyHardware";
@@ -24,7 +27,19 @@ class BleDeviceStore {
   findedDevices = [];
 
   constructor() {
-    makeAutoObservable(this);
+    makeObservable(this, {
+      isScaning: observable,
+      isConnecting: observable,
+      connectedDeviceMap: observable,
+      findedDeviceMap: observable,
+      connectedDevices: observable,
+      findedDevices: observable,
+      initConnectedDevices: action.bound,
+      scanDevices: action.bound,
+      stopScanDevices: action.bound,
+      connect: action.bound,
+      disconnect: action.bound,
+    });
     this.initConnectedDevices();
 
     this.connectedDevices = autorun(() => {
@@ -53,6 +68,13 @@ class BleDeviceStore {
       .catch((error) => {
         console.log(error);
       });
+  }
+
+  async isConnected(deviceId) {
+    const exists = this.connectedDeviceMap.has(deviceId);
+    return (
+      exists == true && this.connectedDeviceMap.get(deviceId).isConnected()
+    );
   }
 
   scanDevices(searchTime = 10) {
@@ -111,10 +133,9 @@ class BleDeviceStore {
         this.stopScanDevices();
       }
 
-      const connectDevice = this.connectedDeviceMap.has(device.id);
-      if (connectDevice == true && (await connectDevice.isConnected())) {
+      if (await this.isConnected(device.id)) {
         console.log(device.id, "已经连接");
-        resolve(connectDevice);
+        resolve(false);
         return;
       }
 
@@ -124,15 +145,15 @@ class BleDeviceStore {
         return;
       }
       runInAction(() => {
-        this.isConnecting = true;
         device.connecting = true;
+        this.isConnecting = true;
       });
       bleUtils
         .connect(device.id)
         .then(
           runInAction(() => {
             console.log("连接成功");
-            device.connceted = true;
+            device.connected = true;
             this.connectedDeviceMap.set(device.id, device);
             this.onDeviceDisconnect(device.id);
             resolve(device);
@@ -140,13 +161,15 @@ class BleDeviceStore {
         )
         .catch(
           runInAction((err) => {
-            device.connceted = false;
+            device.connected = false;
             reject(err);
           })
         )
         .finally(() => {
-          this.isConnecting = false;
-          device.connecting = false;
+          runInAction(() => {
+            device.connecting = false;
+            this.isConnecting = false;
+          });
         });
     });
   }

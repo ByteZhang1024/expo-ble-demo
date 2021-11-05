@@ -123,7 +123,7 @@ class BleUtils {
 
   async findConnectedDevices() {
     return this.manager.connectedDevices([
-      "00000001-0000-1000-8000-00805f9b34fb",
+      "00000003-0000-1000-8000-00805f9b34fb",
     ]);
   }
 
